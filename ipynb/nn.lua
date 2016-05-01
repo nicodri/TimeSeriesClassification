@@ -14,10 +14,10 @@ x_test_withoutpast = f['x_test']
 y_test_withoutpast = f['y_test']
 
 model = nn.Sequential()
-model:add(nn.Linear(567,600))
+model:add(nn.Linear(567,300))
 model:add(nn.Tanh())
-model:add(nn.Linear(600,300))
-model:add(nn.Tanh())
+-- model:add(nn.Linear(600,300))
+-- model:add(nn.Tanh())
 model:add(nn.Linear(300,6))
 model:add(nn.LogSoftMax())
 
@@ -64,34 +64,29 @@ function train_model(train_inputs, train_outputs, test_inputs, test_outputs, mod
         loss[i] = av_L/math.floor(train_inputs:size(1)/batch)
         acc_test = accuracy(test_inputs, test_outputs, model)
         print('Epoch '..i..': '..timer:time().real)
-       	print('\n')
+        print('\n')
         print('Average Loss: '.. loss[i])
         print('\n')
         print('Accucary on test: '.. acc_test)
         print('***************************************************')
-       	if acc_test > 0.99 then
-       		break
-       	end
+        if acc_test > 0.99 then
+            break
+        end
     end
 
     return loss
 end
 
 function accuracy(input, output, model)
-
-	local acc = 0.
-
-	for i = 1, input:size(1) do
-		pred = model:forward(input[i])
-		m, a = pred:view(6,1):max(1)
-
-		if a[1][1] == output[i] then
-			acc = acc + 1.
-		end
-	end
-
-	return acc/input:size(1)
-
+    local acc = 0.
+    for i = 1, input:size(1) do
+        pred = model:forward(input[i])
+        m, a = pred:view(6,1):max(1)
+        if a[1][1] == output[i] then
+            acc = acc + 1.
+        end
+    end
+    return acc/input:size(1)
 end
 
 function compute_logscore(inputs, i, model, C)
@@ -169,12 +164,14 @@ function compute_fscore(predicted_classes, true_classes)
     local recall = right_pred/positive_true
     local fscore = 2*precision*recall/(precision+recall)
     print('Precision: ' .. precision )
-	print('Recall: ' ..  recall)
-	print('F-score: ' ..  fscore)
+    print('Recall: ' ..  recall)
+    print('F-score: ' ..  fscore)
     return fscore
 end        
 
 parameters, gradParameters = model:getParameters()
+print(parameters:size())
+
 torch.manualSeed(0)
 randomkit.uniform(parameters,-0.05,0.05)
 
