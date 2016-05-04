@@ -1,3 +1,4 @@
 #Ignore 
-.DS_Store
+*.DS_Store
 *.ipynb_checkpoints
+HAR/preprocessed_1.hdf5
