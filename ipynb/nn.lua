@@ -12,6 +12,8 @@ x_test = f['x_test_with_past']
 y_test = f['y_test_with_past']
 x_test_withoutpast = f['x_test']
 y_test_withoutpast = f['y_test']
+x_train_withoutpast = f['x_train']
+y_train_withoutpast = f['y_train']
 
 model = nn.Sequential()
 model:add(nn.Linear(567,300))
@@ -169,6 +171,14 @@ function compute_fscore(predicted_classes, true_classes)
     return fscore
 end        
 
+function writeToFile(obj,f)
+  local myFile = hdf5.open(f, 'w')
+  for k,v in pairs(obj) do
+    myFile:write(k, v)
+  end
+  myFile:close()
+end
+
 parameters, gradParameters = model:getParameters()
 print(parameters:size())
 
@@ -180,7 +190,25 @@ criterion = nn.ClassNLLCriterion()
 loss = train_model(x_train, y_train, x_test, y_test, model, criterion, 0.01, 20, 16)
 
 input_test = x_test_withoutpast:narrow(1,2,x_test_withoutpast:size(1)-1)
+input_train = x_train_withoutpast:narrow(1,2,x_train_withoutpast:size(1)-1)
 
 predicted_test = viterbi(input_test, y_test_withoutpast[1], compute_logscore, model, 6)
 
 fscore = compute_fscore(predicted_test, y_test)
+
+print('Producing feature scores for CRF')
+
+nclasses = 6
+ntests = input_test:size(1)
+scores_test = torch.zeros(ntests, nclasses, nclasses)
+for t = 1, ntests do
+    scores_test[t]:copy(compute_logscore(input_test, t, model, nclasses))
+end
+
+ntrains = input_train:size(1)
+scores_train = torch.zeros(ntrains, nclasses, nclasses)
+for t = 1, ntrains do
+    scores_train[t]:copy(compute_logscore(input_train, t, model, nclasses))
+end
+
+writeToFile({["scores_test"] = scores_test, ["scores_train"] = scores_train}, "activity.scores.hdf5")
