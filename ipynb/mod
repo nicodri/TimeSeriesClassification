@@ -1,0 +1,4 @@
+require 'nn'
+
+model = torch.load(opt_model)
+print(model)
